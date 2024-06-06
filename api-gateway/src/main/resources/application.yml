@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: api-gateway
+  zipkin:
+    base-url: http://localhost:9411
+
+  cloud:
+    config:
+      discovery:
+        enabled: true
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: card-service
+          uri: lb://card-service
+          predicates:
+             - Path=/card/**
+        - id: service-service
+          uri: lb://service-service
+          predicates:
+            - Path=/service/**
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/user/**
+
+server:
+  port: 8080
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    hostname: localhost
