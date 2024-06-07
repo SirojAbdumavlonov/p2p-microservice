@@ -1,6 +1,8 @@
 package com.example.user.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
 
 import java.util.Date;
@@ -8,18 +10,21 @@ import java.util.Date;
 @Entity
 @Data
 @Table(name = "users")
+@Builder
 public class User {
     @Id
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
     private int id;
+
     @Column(nullable = false, unique = true)
     private String username;
-    @Column(nullable = false)
-    private String password;
-    @Column(nullable = false, unique = true)
-    private String email;
 
-    private String phone;
+    @Column(nullable = false)
+    @JsonIgnore
+    private String password;
+
+    @Column(nullable = false, unique = true)
+    private String phoneNumber;
 
     private String firstName;
 

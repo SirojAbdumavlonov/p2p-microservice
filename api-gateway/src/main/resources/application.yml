@@ -16,15 +16,15 @@ spring:
         - id: card-service
           uri: lb://card-service
           predicates:
-             - Path=/card/**
+             - Path=/api/cards/**
         - id: service-service
           uri: lb://service-service
           predicates:
-            - Path=/service/**
+            - Path=/api/services/**
         - id: user-service
           uri: lb://user-service
           predicates:
-            - Path=/user/**
+            - Path=/api/users/**
 
 server:
   port: 8080
