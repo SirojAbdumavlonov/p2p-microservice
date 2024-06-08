@@ -14,7 +14,7 @@ import java.util.Date;
 public class User {
     @Id
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
     @Column(nullable = false, unique = true)
     private String username;
@@ -33,6 +33,9 @@ public class User {
     @Column(nullable = false, updatable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
+
+    @JsonIgnore
+    private String role;
 
     public User() {
 

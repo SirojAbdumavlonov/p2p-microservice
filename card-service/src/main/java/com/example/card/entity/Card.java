@@ -37,7 +37,7 @@ public class Card {
     private Date expirationDate;
 
     @Column(nullable = false)
-    private String ownerUsername;
+    private Integer userId;
 
     private boolean isExpired;
 

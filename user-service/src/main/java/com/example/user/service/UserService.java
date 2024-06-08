@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -26,6 +27,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final WebClient.Builder webClient;
+    private final CommonMethodsService methodsService;
 
     @Transactional
     public User saveUser(RegisterRequest request) {
@@ -59,9 +61,11 @@ public class UserService {
     }
     private User createUser(RegisterRequest request){
         return User.builder()
+                .role("USER")
                 .phoneNumber(request.phoneNumber())
                 .username(request.username())
                 .password(passwordEncoder.encode(request.password()))
+                .createdAt(new Date())
                 .build();
     }
 
@@ -102,19 +106,19 @@ public class UserService {
     public User getUserById(Integer userId, UserDetails userDetails) {
         log.debug("Get user by username from token: {}", userDetails.getUsername());
 
-        return getUserIfItIsAuthorizedAccess(userId, userDetails);
+        return methodsService.getUserIfItIsAuthorizedAccess(userId, userDetails);
     }
 
     public List<CardDto> getAllCardsOfUser(Integer userId, UserDetails userDetails) {
         log.debug("Get cards of user with id: {}", userId);
 
         User user =
-                getUserIfItIsAuthorizedAccess(userId, userDetails);
+                methodsService.getUserIfItIsAuthorizedAccess(userId, userDetails);
 
         ResponseEntity<List<CardDto>> response = webClient
                 .build()
                 .get()
-                .uri("http://card-service/cards/user/{userId}", user.getId())
+                .uri("http://card-service/user/{userId}", user.getId())
                 .retrieve()
                 .toEntity(new ParameterizedTypeReference<List<CardDto>>() {})
                 //above line converts list of cards to list of cardDtos
@@ -122,20 +126,16 @@ public class UserService {
         return response.getBody();
     }
 
-    private User getUserIfItIsAuthorizedAccess(Integer userId, UserDetails userDetails){
-        User user = userRepository.findByUsername(userDetails.getUsername())
-                .orElseThrow(() -> new UserNotFoundException(userDetails.getUsername()));
 
-        log.debug("Checking ids");
-        checkIfUserIdTheSameWithIdOfUserFromToken(userId, user.getId());
-        log.debug("Ids do match");
-
-        return user;
+    public User updateUser(User user) {
+        return userRepository.save(user);
     }
 
-    private void checkIfUserIdTheSameWithIdOfUserFromToken(Integer userId, Integer id) {
-        if (!userId.equals(id)){
-            throw new UnauthorizedException("Unauthorized access");
-        }
+    public void deleteUser(Integer userId) {
+        userRepository.deleteById(userId);
     }
+
+
+
+
 }

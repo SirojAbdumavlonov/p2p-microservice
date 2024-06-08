@@ -14,7 +14,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +32,7 @@ public class CardService {
         checkIfCardIsRegistered(card.getNumber());
         log.debug("Card with number {} was not registered before", card.getNumber());
 
-        card.setOwnerUsername(userDetails.getUsername());
+        card.setUserId(Integer.valueOf(userDetails.getUsername()));
 
         boolean isExpired =
                 checkExpirationOfCard(card.getExpirationDate());
@@ -72,16 +74,52 @@ public class CardService {
         log.debug("Getting card details by id {}", cardId);
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new CardNotFoundException(cardId));
-        log.debug("Checking owner of card: {}", card.getOwnerUsername());
-        checkIfCardBelongsToRequestedUser(card.getOwnerUsername(), userDetails.getUsername());
+        checkIfCardBelongsToRequestedUser(card.getUserId(), Integer.valueOf(userDetails.getUsername()));
 
         return card;
     }
 
-    private void checkIfCardBelongsToRequestedUser(String ownerUsername, String username) {
-        if (!ownerUsername.equals(username)) {
+    private void checkIfCardBelongsToRequestedUser(Integer cardUserId, Integer userId) {
+        if (!cardUserId.equals(userId)) {
             log.error("unauthorized access");
             throw new UnauthorizedException("Unauthorized access");
         }
     }
+
+    public BigDecimal getCardBalanceById(Integer cardId) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new CardNotFoundException(cardId));
+        return card.getBalance();
+    }
+
+    public List<Card> getAllCardsOfUser(Integer userId) {
+        return cardRepository.findByUserId(userId);
+    }
+
+
+    public void deductFromBalance(Integer cardId, BigDecimal amount) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new CardNotFoundException(cardId));
+
+        card.setBalance(card.getBalance().subtract(amount));
+        log.debug("Subtracted from balance of card: {}",  card.getId());
+        cardRepository.save(card);
+    }
+
+    public void addToBalance(Integer cardId, BigDecimal amount) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new CardNotFoundException(cardId));
+        card.setBalance(card.getBalance().add(amount));
+        log.debug("Added money to balance of receiver of card: {}",  card.getId());
+        cardRepository.save(card);
+    }
+
+    public Card updateCard(Card card) {
+        return cardRepository.save(card);
+    }
+
+    public void deleteCard(Integer cardId) {
+        cardRepository.deleteById(cardId);
+    }
+
 }

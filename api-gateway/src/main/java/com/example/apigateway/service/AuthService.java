@@ -3,12 +3,14 @@ package com.example.apigateway.service;
 import com.example.apigateway.dto.LoginRequest;
 import com.example.apigateway.dto.LoginResponse;
 import com.example.apigateway.dto.SignUpRequest;
+import com.example.apigateway.dto.UserDto;
 import com.example.apigateway.security.UserForJwtToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,33 +32,34 @@ public class AuthService {
 
     public LoginResponse signInUser(LoginRequest request) {
         log.debug("Singing in user: {}", request);
-        String username = webClient
+        UserDto userDto = webClient
                 .build()
                 .post()
                 .uri("http://user-service/sign-in")
                 .bodyValue(request)
                 .retrieve()
-                .bodyToMono(String.class)
+                .bodyToMono(UserDto.class)
                 .block();
         log.debug("User logged in: {}", request);
-        authenticateUser(username, request.password());
-        return createJwtTokenForUserAndReturn(username);
+        authenticateUser(userDto.id(), request.password());
+        return createJwtTokenForUserAndReturn(userDto.role(), userDto.id());
 
     }
 
-    private void authenticateUser(String username, String password) {
+    private void authenticateUser(Integer userId, String password) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        username, password
+                        userId, password
                 )
         );
         log.debug("Authenticated user: {}", authentication);
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
-    private LoginResponse createJwtTokenForUserAndReturn(String username) {
+    private LoginResponse createJwtTokenForUserAndReturn(String role, Integer userId) {
         UserForJwtToken user = new UserForJwtToken();
-        user.setUsername(username);
+        user.setUsername(userId);
+        user.setRole(role);
 
         return new LoginResponse(generateJwtToken(user));
     }
@@ -70,8 +74,11 @@ public class AuthService {
 
         Map<String, Object> claims = new HashMap<>();
         claims.put("username", user.getUsername());
+        claims.put("role", user.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList()));
 
-        log.debug("Claim: Username={}", user.getUsername());
+        log.debug("Claim: Username={}, role = {}", user.getUsername(), user.getAuthorities());
         return claims;
     }
     public void registerUser(SignUpRequest request) {
