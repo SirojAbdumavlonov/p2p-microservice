@@ -3,6 +3,7 @@ package com.example.user.service;
 import com.example.user.dto.CardDto;
 import com.example.user.dto.LoginRequest;
 import com.example.user.dto.RegisterRequest;
+import com.example.user.dto.UserRegistrationEvent;
 import com.example.user.entity.User;
 import com.example.user.exception.*;
 import com.example.user.repository.UserRepository;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final WebClient.Builder webClient;
     private final CommonMethodsService methodsService;
+    private final KafkaTemplate<String, UserRegistrationEvent> userRegistrationTemplate;
+
 
     @Transactional
     public User saveUser(RegisterRequest request) {
@@ -37,20 +41,33 @@ public class UserService {
 
         log.debug("Username is valid");
 
-        checkIfPhoneNumberExists(request.phoneNumber());
+        checkIfEmailExists(request.email());
 
-        log.debug("Phone number is valid");
+        log.debug("Email is valid");
 
         User user = createUser(request);
+        log.info("Saved user: {}", user);
+        User savedUser = userRepository.save(user);
+        log.info("User is saved: {}", savedUser);
 
-        userRepository.save(user);
+        log.info("Sending from kafka");
+        createAndSentUserRegistrationEvent(request);
+        log.debug("User registration event is sent!");
+        log.info("Send from kafka");
         return user;
     }
 
-    private void checkIfPhoneNumberExists(String phoneNumber) {
-        if(userRepository.existsByPhoneNumber(phoneNumber)){
-            log.error("Phone number already exists: {}",phoneNumber);
-            throw new PhoneNumberAlreadyUsedException(phoneNumber);
+    private void createAndSentUserRegistrationEvent(RegisterRequest request) {
+        UserRegistrationEvent userRegistrationEvent = new UserRegistrationEvent();
+        userRegistrationEvent.setEmail(request.email());
+        userRegistrationEvent.setUsername(request.username());
+        userRegistrationTemplate.send("user-topic", userRegistrationEvent);
+    }
+
+    private void checkIfEmailExists(String email) {
+        if(userRepository.findByEmail(email).isPresent()){
+            log.error("Email already exists: {}",email);
+            throw new EmailAlreadyUsedException(email);
         }
     }
     private void checkIfUsernameExists(String username) {
@@ -62,7 +79,8 @@ public class UserService {
     private User createUser(RegisterRequest request){
         return User.builder()
                 .role("USER")
-                .phoneNumber(request.phoneNumber())
+                .email(request.email())
+                .phoneNumber(request.email())
                 .username(request.username())
                 .password(passwordEncoder.encode(request.password()))
                 .createdAt(new Date())
@@ -73,10 +91,11 @@ public class UserService {
     public String login(LoginRequest request) {
         log.debug("Login request: {}", request);
 
-        checkIfPhoneNumberUsed(request.phoneNumber());
-        log.debug("Phone number is used");
+        checkIfEmailExists(request.email());
+        log.debug("Email is used");
 
-        User user = userRepository.findByPhoneNumber(request.phoneNumber());
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new UserNotFoundException(request.email()));
         log.debug("Found user: {}", user);
 
         checkIfPasswordsTheSame(request.password(), user.getPassword());
@@ -99,9 +118,6 @@ public class UserService {
         }
     }
 
-    public boolean checkUserExistenceById(int userId) {
-        return userRepository.existsById(userId);
-    }
 
     public User getUserById(Integer userId, UserDetails userDetails) {
         log.debug("Get user by username from token: {}", userDetails.getUsername());
@@ -127,15 +143,29 @@ public class UserService {
     }
 
 
-    public User updateUser(User user) {
+    public User updateUser(Integer userId, User user) {
+        if (!user.getId().equals(userId)) {
+            log.error("User with user id {} does not match", userId);
+            throw new UserNotFoundException("User not found");
+        }
+        ifUserExistsById(userId);
         return userRepository.save(user);
     }
 
     public void deleteUser(Integer userId) {
+        log.debug("Deleting user with id: {}", userId);
+        ifUserExistsById(userId);
         userRepository.deleteById(userId);
+    }
+    private void ifUserExistsById(Integer userId){
+        if (!userRepository.existsById(userId)){
+            log.error("User with user id {} does not exist", userId);
+            throw new UserNotFoundException("User not found");
+        }
     }
 
 
-
-
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
 }

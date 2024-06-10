@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: optional:configserver:http://localhost:8888
   application:
     name: user-service
   zipkin:
@@ -13,6 +15,9 @@ spring:
       ddl-auto: update
   kafka:
     bootstrap-servers: localhost:9092
+
+
+
 logging:
   level:
     root: info

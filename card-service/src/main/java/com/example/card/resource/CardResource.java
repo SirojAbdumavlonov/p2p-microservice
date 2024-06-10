@@ -1,6 +1,7 @@
 package com.example.card.resource;
 
 import com.example.card.entity.Card;
+import com.example.card.exception.CardNotFoundException;
 import com.example.card.service.CardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -27,7 +27,7 @@ public class CardResource {
     private final CardService cardService;
 
     @PostMapping("")
-    public ResponseEntity<?> addCardToUser(@Validated @RequestBody Card card,
+    public ResponseEntity<?> addCardToUser(@Valid @RequestBody Card card,
                                      @AuthenticationPrincipal UserDetails userDetails) throws BadRequestException, URISyntaxException {
         log.info("REST request to save Card: {}", card);
         if(card.getId() != null){
@@ -84,22 +84,33 @@ public class CardResource {
 
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping("")
+    public ResponseEntity<List<Card>> getAllCards(){
+        log.info("REST request to get all cards");
+        List<Card> cards = cardService.getAllCards();
+        log.info("All cards: {}", cards);
+
+        return ResponseEntity.ok().body(cards);
+    }
+
 
     @PutMapping("/{cardId}")
     @PreAuthorize("hasAuthority('ROLE_USER')")
-    public ResponseEntity<Card> updateCard(@PathVariable Long cardId, @Valid @RequestBody Card card) {
-        if (!card.getId().equals(cardId)) {
-            throw new RuntimeException("Card not found");
-        }
-        Card updatedCard = cardService.updateCard(card);
-        return new ResponseEntity<>(updatedCard, HttpStatus.OK);
+    public ResponseEntity<Card> updateCard(@PathVariable Integer cardId, @Valid @RequestBody Card card) {
+        log.info("REST request to update Card : {}", card);
+        Card updatedCard = cardService.updateCard(cardId, card);
+        log.info("Card updated successfully: {}", card);
+        return ResponseEntity.ok().body(updatedCard);
     }
 
     @DeleteMapping("/{cardId}")
     @PreAuthorize("hasAuthority('ROLE_USER')")
-    public ResponseEntity<Void> deleteCard(@PathVariable Integer cardId) {
+    public ResponseEntity<String> deleteCard(@PathVariable Integer cardId) {
+        log.info("REST request to delete Card : {}", cardId);
         cardService.deleteCard(cardId);
-        return ResponseEntity.noContent().build();
+        log.info("Deleted card with id: {}", cardId);
+        return ResponseEntity.ok().body("Deleted successfully");
     }
 
 

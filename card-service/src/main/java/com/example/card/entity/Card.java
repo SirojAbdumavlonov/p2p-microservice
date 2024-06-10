@@ -3,8 +3,10 @@ package com.example.card.entity;
 import com.example.card.constant.CardStatus;
 import com.example.card.constant.CardType;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
@@ -14,6 +16,8 @@ import java.util.Date;
 @Data
 @Table(name = "cards")
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Card {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,7 +45,5 @@ public class Card {
 
     private boolean isExpired;
 
-    public Card() {
 
-    }
 }

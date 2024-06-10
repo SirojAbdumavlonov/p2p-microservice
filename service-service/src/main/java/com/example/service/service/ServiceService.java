@@ -40,4 +40,29 @@ public class ServiceService {
     public List<Service> getAllServices() {
         return serviceRepository.findAll();
     }
+
+    public Service updateService(Service service, Integer serviceId) {
+        log.debug("Updating service: {}", service);
+        if (!service.getId().equals(serviceId)) {
+            throw new RuntimeException("Service not found");
+        }
+        checkIfServiceExists(serviceId);
+
+        return serviceRepository.save(service);
+    }
+
+    public void deleteService(Integer serviceId) {
+        log.debug("Deleting service: {}", serviceId);
+        checkIfServiceExists(serviceId);
+
+        serviceRepository.deleteById(serviceId);
+    }
+
+    private void checkIfServiceExists(Integer serviceId) {
+        log.debug("Checking if service exists: {}", serviceId);
+        if(!serviceRepository.existsById(serviceId)) {
+            log.error("Service with id {} not found", serviceId);
+            throw new ServiceNotFoundException(serviceId);
+        }
+    }
 }

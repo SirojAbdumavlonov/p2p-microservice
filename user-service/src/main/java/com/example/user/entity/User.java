@@ -2,8 +2,10 @@ package com.example.user.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Date;
 
@@ -11,19 +13,21 @@ import java.util.Date;
 @Data
 @Table(name = "users")
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
     @Id
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
     private Integer id;
-
-    @Column(nullable = false, unique = true)
+    @Column(unique = true, nullable = false)
     private String username;
 
-    @Column(nullable = false)
     @JsonIgnore
     private String password;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true, nullable = false)
+    private String email;
+
     private String phoneNumber;
 
     private String firstName;
@@ -37,7 +41,4 @@ public class User {
     @JsonIgnore
     private String role;
 
-    public User() {
-
-    }
 }

@@ -15,8 +15,8 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse(exception.getMessage()));
     }
-    @ExceptionHandler({PhoneNumberAlreadyUsedException.class})
-    public ResponseEntity<Object> handlePhoneNumberAlreadyUsedException(PhoneNumberAlreadyUsedException exception) {
+    @ExceptionHandler({EmailAlreadyUsedException.class})
+    public ResponseEntity<Object> handlePhoneNumberAlreadyUsedException(EmailAlreadyUsedException exception) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse(exception.getMessage()));

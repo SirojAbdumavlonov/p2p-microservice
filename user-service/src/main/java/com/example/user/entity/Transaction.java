@@ -1,9 +1,12 @@
 package com.example.user.entity;
 
 import com.example.user.constant.TransactionStatus;
+import com.example.user.constant.TransactionType;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -12,18 +15,19 @@ import java.util.Date;
 @Data
 @Builder
 @Table(name = "p2p_transactions")
-public class P2pTransaction {
+@AllArgsConstructor
+@NoArgsConstructor
+public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id", nullable = false)
     private User sender;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recipient_id", nullable = false)
-    private User recipient;
+    @Column(nullable = false)
+    private Integer recipientId;
 
     private BigDecimal amount;
 
@@ -38,9 +42,10 @@ public class P2pTransaction {
     @Enumerated(EnumType.STRING)
     private TransactionStatus status;
 
+    @Enumerated(EnumType.STRING)
+    private TransactionType type;
+
     @Temporal(TemporalType.TIMESTAMP)
     private Date transactionDate;
-    public P2pTransaction() {
 
-    }
 }

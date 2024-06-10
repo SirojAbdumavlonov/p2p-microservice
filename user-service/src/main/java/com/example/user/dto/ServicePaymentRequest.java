@@ -1,4 +1,8 @@
 package com.example.user.dto;
 
-public record ServicePaymentRequest(Integer serviceId, Integer senderCardId) {
+import java.math.BigDecimal;
+
+public record ServicePaymentRequest(Integer serviceId, Integer senderCardId,
+                                    Integer accountId, BigDecimal amount)
+        implements PaymentRequest{
 }

@@ -2,6 +2,7 @@ package com.example.service.resource;
 
 import com.example.service.entity.Service;
 import com.example.service.service.ServiceService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
@@ -22,7 +23,7 @@ public class ServiceResource {
 
     private final ServiceService service;
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("")
     public ResponseEntity<?> addService(@Validated @RequestBody Service newService) throws BadRequestException, URISyntaxException {
         log.info("REST request to add service");
@@ -50,6 +51,24 @@ public class ServiceResource {
         return ResponseEntity.ok().body(services);
     }
 
+
+    @PutMapping("/{serviceId}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')") // Only administrators can update services
+    public ResponseEntity<Service> updateService(@PathVariable Integer serviceId, @Valid @RequestBody Service updatableService) {
+        log.info("REST request to update service: {}", updatableService);
+        Service updatedService = service.updateService(updatableService, serviceId);
+        log.info("Updated service: {}", updatedService);
+        return ResponseEntity.ok().body(updatedService);
+    }
+
+    @DeleteMapping("/{serviceId}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')") // Only administrators can delete services
+    public ResponseEntity<String> deleteService(@PathVariable Integer serviceId) {
+        log.info("REST request to delete service: {}", serviceId);
+        service.deleteService(serviceId);
+        log.info("Deleted service: {}", serviceId);
+        return ResponseEntity.ok().body("Deleted successfully!");
+    }
 
 
 }

@@ -4,12 +4,10 @@ import com.example.user.dto.CardDto;
 import com.example.user.dto.LoginRequest;
 import com.example.user.dto.RegisterRequest;
 import com.example.user.entity.User;
-import com.example.user.exception.UserNotFoundException;
 import com.example.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,16 +26,17 @@ public class UserResource {
 
     private final UserService userService;
 
-    @PostMapping("/register")
+    @PostMapping("/auth/register")
     public ResponseEntity<?> saveUser(@RequestBody RegisterRequest request) throws URISyntaxException {
         log.info("REST request to register user: {}", request);
+
         User user = userService.saveUser(request);
         log.info("Saved user: {}", user);
         return ResponseEntity.created(new URI("/api/users/" + user.getId()))
                     .body("Registered successfully");
 
     }
-    @PostMapping("/sign-in")
+    @PostMapping("/auth/sign-in")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         log.info("REST request to login");
 
@@ -68,7 +67,7 @@ public class UserResource {
     }
 
     @GetMapping("/{userId}/cards")
-    public ResponseEntity<?> getCardsOfUser(@PathVariable Integer userId,
+    public ResponseEntity<List<CardDto>> getCardsOfUser(@PathVariable Integer userId,
                                           @AuthenticationPrincipal UserDetails user) {
         log.info("REST request to get cards of user: {}", userId);
 
@@ -77,24 +76,33 @@ public class UserResource {
 
         return ResponseEntity.ok().body(cards);
     }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping("")
+    public ResponseEntity<List<User>> getAllUsers(){
+        log.info("REST request to get all users");
+        List<User> users = userService.getAllUsers();
+        log.info("All found users: {}", users);
 
+        return ResponseEntity.ok().body(users);
+    }
 
 
     @PutMapping("/{userId}")
     @PreAuthorize("hasAuthority('ROLE_USER')")
     public ResponseEntity<User> updateUser(@PathVariable Integer userId, @Valid @RequestBody User user) {
-        if (!user.getId().equals(userId)) {
-            throw new UserNotFoundException("User not found");
-        }
-        User updatedUser = userService.updateUser(user);
-        return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+        log.info("REST request to update user: {}", user);
+        User updatedUser = userService.updateUser(userId, user);
+        log.info("Updated user: {}", updatedUser);
+        return ResponseEntity.ok().body(updatedUser);
     }
 
     @DeleteMapping("/{userId}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')") // Only administrators can delete users
-    public ResponseEntity<Void> deleteUser(@PathVariable Integer userId) {
+    public ResponseEntity<String> deleteUser(@PathVariable Integer userId) {
+        log.info("REST request to delete user with id: {}", userId);
         userService.deleteUser(userId);
-        return ResponseEntity.noContent().build();
+        log.info("Deleted user with id: {}", userId);
+        return ResponseEntity.ok().body("Deleted successfully");
     }
 
 

@@ -1,7 +1,9 @@
 package com.example.user.resource;
 
+import com.example.user.constant.TransactionType;
 import com.example.user.dto.P2pPaymentRequest;
 import com.example.user.dto.ServicePaymentRequest;
+import com.example.user.entity.Transaction;
 import com.example.user.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +25,7 @@ public class PaymentResource {
                                          @AuthenticationPrincipal UserDetails userDetails,
                                          @RequestBody P2pPaymentRequest request){
         log.info("Sending payment to user {}", userId);
-        paymentService.sendPaymentToUser(userId, userDetails, request);
+        paymentService.sendPayment(userId, userDetails, request);
         log.info("Successfully sent payment to user {}", request.receiverId());
 
         return ResponseEntity.ok().body("Funds are transferred successfully!");
@@ -34,7 +36,7 @@ public class PaymentResource {
                                                   @AuthenticationPrincipal UserDetails userDetails,
                                                   @RequestBody ServicePaymentRequest request){
         log.info("Sending payment to service {}", request.serviceId());
-        paymentService.sendPaymentToService(userId, userDetails, request);
+        paymentService.sendPayment(userId, userDetails, request);
 
         return null;
     }

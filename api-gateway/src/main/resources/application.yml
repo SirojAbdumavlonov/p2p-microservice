@@ -1,4 +1,8 @@
 spring:
+  main:
+    allow-bean-definition-overriding: true
+  config:
+    import: optional:configserver:http://localhost:8888
   application:
     name: api-gateway
   zipkin:
@@ -27,7 +31,7 @@ spring:
             - Path=/api/users/**
 
 server:
-  port: 8080
+  port: 8222
 eureka:
   client:
     register-with-eureka: true
@@ -36,3 +40,10 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
   instance:
     hostname: localhost
+
+jwt:
+  token:
+    validity:
+      864_000_000
+  secret:
+    30M18gaU4TRNnOPIcsOsp6BoCrvkxUZ2rej8OuQILnahRGarCku0eAjl5QPKpeI7gMdWSZ+9523gly72Efs4CQ==

@@ -1,83 +1,84 @@
 version: '3.8'
 
 services:
-  card-service:
-    image: card-service:latest
-    build:
-        context: card-service
-    expose:
-        - "8081:8081"
-
-    environment:
-      - SPRING_ZIPKIN_BASE_URL=http://zipkin:9411
-      - SPRING_APPLICATION_NAME=card-service
-
-
-    depends_on:
-        - postgres-card
-        - zipkin
-        - kafka
-        - eureka-server
-
-  service-service:
-    image: service-service:latest
-    build:
-      context: service-service
-    expose:
-      - "8082:8082"
-
-    environment:
-      - SPRING_ZIPKIN_BASE_URL=http://zipkin:9411
-      - SPRING_APPLICATION_NAME=service-service
-
-    depends_on:
-      - postgres-service
-      - zipkin
-      - kafka
-      - eureka-server
-
-  user-service:
-    image: user-service:latest
-    build:
-      context: user-service
-    expose:
-      - "8083:8083"
-
-    environment:
-      - SPRING_ZIPKIN_BASE_URL=http://zipkin:9411
-      - SPRING_APPLICATION_NAME=user-service
-
-    depends_on:
-      - postgres-user
-      - zipkin
-      - kafka
-      - eureka-server
-
-
-  api-gateway:
-    image: api-gateway:latest
-    build:
-      context: api-gateway
-    expose:
-      - "8080:8080"
-
-    environment:
-      - SPRING_ZIPKIN_BASE_URL=http://zipkin:9411
-      - SPRING_APPLICATION_NAME=api-gateway
-
-    depends_on:
-      - zipkin
-      - kafka
-      - eureka-server
-
-  eureka-server:
-    image: eureka:latest
-    build:
-      context: eureka-server
-    ports:
-      - "8761:8761"
-    environment:
-      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+#  card-service:
+#    image: card-service:latest
+#    build:
+#        context: card-service
+#    expose:
+#        - "8081:8081"
+#
+#    environment:
+#      - SPRING_ZIPKIN_BASE_URL=http://zipkin:9411
+#      - SPRING_APPLICATION_NAME=card-service
+#
+#
+#    depends_on:
+#        - postgres-card
+#        - zipkin
+#        - kafka
+#        - eureka-server
+#
+#  service-service:
+#    image: service-service:latest
+#    build:
+#      context: service-service
+#    expose:
+#      - "8082:8082"
+#
+#    environment:
+#      - SPRING_ZIPKIN_BASE_URL=http://zipkin:9411
+#      - SPRING_APPLICATION_NAME=service-service
+#      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/  # Eureka discovery
+#
+#    depends_on:
+#      - postgres-service
+#      - zipkin
+#      - kafka
+#      - eureka-server
+#
+#  user-service:
+#    image: user-service:latest
+#    build:
+#      context: user-service
+#    expose:
+#      - "8083:8083"
+#
+#    environment:
+#      - SPRING_ZIPKIN_BASE_URL=http://zipkin:9411
+#      - SPRING_APPLICATION_NAME=user-service
+#
+#    depends_on:
+#      - postgres-user
+#      - zipkin
+#      - kafka
+#      - eureka-server
+#
+#
+#  api-gateway:
+#    image: api-gateway:latest
+#    build:
+#      context: api-gateway
+#    expose:
+#      - "8080:8080"
+#
+#    environment:
+#      - SPRING_ZIPKIN_BASE_URL=http://zipkin:9411
+#      - SPRING_APPLICATION_NAME=api-gateway
+#
+#    depends_on:
+#      - zipkin
+#      - kafka
+#      - eureka-server
+#
+#  eureka-server:
+#    image: eureka:latest
+#    build:
+#      context: eureka-server
+#    ports:
+#      - "8761:8761"
+#    environment:
+#      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
 
   postgres-card:
     image: postgres:latest
@@ -161,4 +162,5 @@ volumes:
 
 networks:
   microservices-net:
+    driver: bridge
 
